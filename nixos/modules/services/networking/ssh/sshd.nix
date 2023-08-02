@@ -28,15 +28,14 @@ let
     } " ";});
 
   configFile = settingsFormat.generate "config" cfg.settings;
-  configFileWithBeforeConfig = ''
+  configFileBefore = pkgs.writeText "sshd-before.conf" ''
     # Custom options from `beforeConfig`, to override generated options
     ${cfg.beforeConfig}
 
     # Generated options from other settings
-    ${configFile}
   '';
   sshconf = pkgs.runCommand "sshd.conf-validated" { nativeBuildInputs = [ validationPackage ]; } ''
-    cat ${configFileWithBeforeConfig} - >$out <<EOL
+    cat ${configFileBefore} ${configFile} - >$out <<EOL
     ${cfg.extraConfig}
     EOL
 
