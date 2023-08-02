@@ -28,8 +28,15 @@ let
     } " ";});
 
   configFile = settingsFormat.generate "config" cfg.settings;
+  configFileWithBeforeConfig = ''
+    # Custom options from `beforeConfig`, to override generated options
+    ${cfg.beforeConfig}
+
+    # Generated options from other settings
+    ${configFile}
+  '';
   sshconf = pkgs.runCommand "sshd.conf-validated" { nativeBuildInputs = [ validationPackage ]; } ''
-    cat ${configFile} - >$out <<EOL
+    cat ${configFileWithBeforeConfig} - >$out <<EOL
     ${cfg.extraConfig}
     EOL
 
@@ -402,6 +409,17 @@ in
         type = types.lines;
         default = "";
         description = lib.mdDoc "Verbatim contents of {file}`sshd_config`.";
+      };
+
+      beforeConfig = mkOption {
+        type = types.lines;
+        default = "";
+        description = lib.mdDoc ''
+          Extra configuration text prepended to {file}`sshd_config`. Other generated
+          options will be added after a `Match *` pattern.
+          See {manpage}`sshd_config(5)`
+          for help.
+        '';
       };
 
       moduliFile = mkOption {
